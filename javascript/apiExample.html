@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Server API Example</title>
+    <script src="javascript.js" defer></script>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentUser = null;
+            let serverUrl = "";
+            let apiKey = null;
+
+            const output = document.getElementById("output");
+            const loginBtn = document.getElementById("loginBtn");
+            const getSymbolsBtn = document.getElementById("getSymbolsBtn");
+
+            let authType = document.querySelector('input[name="authType"]:checked').value;
+            const radioButtons = document.querySelectorAll('input[name="authType"]');            
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    authType = document.querySelector('input[name="authType"]:checked').value;
+                });
+            });
+
+            loginBtn.onclick = async () => {
+                const login = +document.getElementById("login").value.trim();
+                const password = document.getElementById("password").value.trim();
+                serverUrl = document.getElementById("server").value.trim();
+
+                if (!login || !password || !serverUrl) {
+                    log("Please fill in all fields.");
+                    return;
+                }
+
+                currentUser = { login, password };
+
+                const data = { login };
+                const headers = await getPOSTHeaders(currentUser, data, authType);
+
+                const result = await fetchData({
+                    url: `${serverUrl}/api/v1/authorize`,
+                    method: "POST",
+                    headers,
+                    data
+                });
+                
+                apiKey = result.token;
+                if (!apiKey) {
+                    log("Login failed. No API key returned.");
+                    return;
+                }
+
+                getSymbolsBtn.disabled = false;
+                log("Logged in. Ready to get symbols. \n");
+
+                // Assign the API key to the currentUser object
+                currentUser.apiKey = apiKey;
+            };
+
+            getSymbolsBtn.onclick = async () => {
+                if (!currentUser || !serverUrl) {
+                    return
+                }
+
+                const data = {};
+                const headers = await getPOSTHeaders(currentUser, data, authType);
+
+                const result = await fetchData({
+                    url: `${serverUrl}/api/v1/admin/symbols/query?maxResults=1000`,
+                    method: "GET",
+                    headers,
+                    data
+                });
+            };
+        });
+
+        async function fetchData({ url, method = "POST", headers = {}, data }) {
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...headers
+                    },
+                    body: method == "GET" ? undefined : JSON.stringify(data),
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+
+                const result = await res.json();
+                log("API response:\n" + JSON.stringify(result, null, 2));
+                return result;
+            } catch (err) {
+                log("Error:\n" + err.message);
+                throw err;
+            }
+        }
+
+        function log(msg) {
+            output.textContent = `\n${msg}`;
+        }
+
+    </script>
+</head>
+
+<body>
+    <h1>Trade Server API example in javascript</h1>
+
+    <label for="login">Login:</label>
+    <input type="text" id="login" value="1" />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" value="xxx" />
+
+    <label for="server">Server URL:</label>
+    <input type="text" id="server" value="https://yourbourse.trade:2xxxx"" />
+
+    <label>Auth Type:</label>
+    <input type="radio" name="authType" value="nonce" checked /> Nonce
+    <input type="radio" name="authType" value="timestamp" /> Timestamp
+    
+
+    <br />
+    <button id="loginBtn">Login</button>
+    <button id="getSymbolsBtn" disabled>Get Symbols</button>
+
+    <pre id="output">Waiting for login...</pre>
+</body>
+
+</html>
