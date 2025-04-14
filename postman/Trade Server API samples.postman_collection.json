@@ -1,0 +1,612 @@
+{
+	"info": {
+		"_postman_id": "f0a50295-681d-47e8-8ecb-40ff596ba704",
+		"name": "Trade Server API samples",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "35346224"
+	},
+	"item": [
+		{
+			"name": "Add new group (Nonce)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, nonce) {\r",
+							"    return `Content=${content}\\nNonce=${nonce}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"// Step 1: Authorize User\r",
+							"const authNonce = Date.now().toString();\r",
+							"const authBody = JSON.stringify({ \"login\": +login });\r",
+							"const authSignature = getBase64UrlHMAC(getSignInput(authBody, authNonce), password);\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: `${baseUrl}/api/v1/authorize`,\r",
+							"    method: \"POST\",\r",
+							"    header: [\r",
+							"        { key: \"Content-Type\", value: \"application/json\" },\r",
+							"        { key: \"X-YB-Nonce\", value: authNonce },\r",
+							"        { key: \"X-YB-Sign\", value: authSignature }\r",
+							"    ],\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: authBody\r",
+							"    }\r",
+							"}, function (err, res) {\r",
+							"    if (err) {\r",
+							"        console.error(\"⚠️ Auth error:\", err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    const authResponse = res.json();\r",
+							"\r",
+							"    if (authResponse && authResponse.errorCode){\r",
+							"        console.error(\"⚠️ Auth error:\", authResponse);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    console.log(\"✅ Auth success:\", authResponse);\r",
+							"\r",
+							"    let body = JSON.parse(pm.request.body.raw);\r",
+							"    body.name = body.name + \"_\" + Date.now().toString();\r",
+							"    pm.request.body.update(JSON.stringify(body));\r",
+							"\r",
+							"    // Step 2: Prepare Main Request Headers\r",
+							"    const requestBody = pm.request.body?.mode === \"raw\" ? pm.request.body.raw : \"\";\r",
+							"    const requestNonce = Date.now().toString();\r",
+							"    const requestSignature = getBase64UrlHMAC(getSignInput(requestBody, requestNonce), password);\r",
+							"\r",
+							"    forceSetHeader(\"X-YB-API-Key\", authResponse.token);\r",
+							"    forceSetHeader(\"X-YB-Nonce\", requestNonce);\r",
+							"    forceSetHeader(\"X-YB-Sign\", requestSignature);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\": 0,\r\n    \"version\": 0,\r\n    \"name\": \"Managers/manager2\",\r\n    \"company\": \"Your Company Limited2\",\r\n    \"companyTemplatesFolder\": \"\",\r\n    \"currency\": \"USD\",\r\n    \"currencyDecimalPlaces\": 3,\r\n    \"sendDailyReports\": false,\r\n    \"sendMonthlyReports\": false,\r\n    \"reportsEmail\": \"adamTest@yourbourse.com\",\r\n    \"interestRate\": 0,\r\n    \"freeMarginMode\": \"UseFloatingPL\",\r\n    \"stopoutValueType\": \"Percentage\",\r\n    \"stopout\": 0,\r\n    \"marginCallValueType\": \"Percentage\",\r\n    \"marginCall\": 0,\r\n    \"openPositionType\": \"Netting\",\r\n    \"defaultLeverage\": 100,\r\n    \"demoDeposit\": 0,\r\n    \"demoInactivityPeriod\": 30,\r\n    \"maxTradeHistoryPeriod\": 365,\r\n    \"maxOrders\": 0,\r\n    \"maxPositions\": 0,\r\n    \"maxMarketDataSubscriptions\": 1000,\r\n    \"commissionProfiles\": [],\r\n    \"symbols\": [\r\n        {\r\n            \"symbolMask\": \"*\"\r\n        }\r\n    ],\r\n    \"path\": [\r\n        \"Managers\",\r\n        \"manager\"\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/admin/groups/edit",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"groups",
+						"edit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add new group (Timestamp)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, authTimestamp) {\r",
+							"    return `Content=${content}\\nTimestamp=${authTimestamp}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"function getAuthTimestamp() {\r",
+							"    const timestamp = Date.now() * 1000;\r",
+							"    return timestamp.toString();\r",
+							"}\r",
+							"\r",
+							"// Step 1: Authorize User\r",
+							"const authTimestamp = getAuthTimestamp();\r",
+							"const authBody = JSON.stringify({ \"login\": +login });\r",
+							"const authSignature = getBase64UrlHMAC(getSignInput(authBody, authTimestamp), password);\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: `${baseUrl}/api/v1/authorize`,\r",
+							"    method: \"POST\",\r",
+							"    header: [\r",
+							"        { key: \"Content-Type\", value: \"application/json\" },\r",
+							"        { key: \"X-YB-Timestamp\", value: authTimestamp },\r",
+							"        { key: \"X-YB-Sign\", value: authSignature }\r",
+							"    ],\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: authBody\r",
+							"    }\r",
+							"}, function (err, res) {\r",
+							"    if (err) {\r",
+							"        console.error(\"⚠️ Auth error:\", err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    const authResponse = res.json();\r",
+							"\r",
+							"    if (authResponse && authResponse.errorCode){\r",
+							"        console.error(\"⚠️ Auth error:\", authResponse);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    console.log(\"✅ Auth success:\", authResponse);\r",
+							"    \r",
+							"    let body = JSON.parse(pm.request.body.raw);\r",
+							"    body.name = body.name + \"_\" + Date.now().toString();\r",
+							"    pm.request.body.update(JSON.stringify(body));\r",
+							"\r",
+							"    // Step 2: Prepare Main Request Headers\r",
+							"    const requestBody = pm.request.body?.mode === \"raw\" ? pm.request.body.raw : \"\";\r",
+							"    const timestamp = getAuthTimestamp();\r",
+							"    const requestSignature = getBase64UrlHMAC(getSignInput(requestBody, timestamp), password);\r",
+							"\r",
+							"    forceSetHeader(\"X-YB-API-Key\", authResponse.token);\r",
+							"    forceSetHeader(\"X-YB-Timestamp\", timestamp);\r",
+							"    forceSetHeader(\"X-YB-Sign\", requestSignature);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\": 0,\r\n    \"version\": 0,\r\n    \"name\": \"Managers/manager2\",\r\n    \"company\": \"Your Company Limited2\",\r\n    \"companyTemplatesFolder\": \"\",\r\n    \"currency\": \"USD\",\r\n    \"currencyDecimalPlaces\": 3,\r\n    \"sendDailyReports\": false,\r\n    \"sendMonthlyReports\": false,\r\n    \"reportsEmail\": \"adamTest@yourbourse.com\",\r\n    \"interestRate\": 0,\r\n    \"freeMarginMode\": \"UseFloatingPL\",\r\n    \"stopoutValueType\": \"Percentage\",\r\n    \"stopout\": 0,\r\n    \"marginCallValueType\": \"Percentage\",\r\n    \"marginCall\": 0,\r\n    \"openPositionType\": \"Netting\",\r\n    \"defaultLeverage\": 100,\r\n    \"demoDeposit\": 0,\r\n    \"demoInactivityPeriod\": 30,\r\n    \"maxTradeHistoryPeriod\": 365,\r\n    \"maxOrders\": 0,\r\n    \"maxPositions\": 0,\r\n    \"maxMarketDataSubscriptions\": 1000,\r\n    \"commissionProfiles\": [],\r\n    \"symbols\": [\r\n        {\r\n            \"symbolMask\": \"*\"\r\n        }\r\n    ],\r\n    \"path\": [\r\n        \"Managers\",\r\n        \"manager\"\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://yourbourse.trade:2xxxx/api/v1/admin/groups/edit",
+					"protocol": "https",
+					"host": [
+						"yourbourse",
+						"trade"
+					],
+					"port": "2xxxx",
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"groups",
+						"edit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get symbols (Nonce)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, nonce) {\r",
+							"    return `Content=${content}\\nNonce=${nonce}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"// Step 1: Authorize User\r",
+							"const authNonce = Date.now().toString();\r",
+							"const authBody = JSON.stringify({ \"login\": +login });\r",
+							"const authSignature = getBase64UrlHMAC(getSignInput(authBody, authNonce), password);\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: `${baseUrl}/api/v1/authorize`,\r",
+							"    method: \"POST\",\r",
+							"    header: [\r",
+							"        { key: \"Content-Type\", value: \"application/json\" },\r",
+							"        { key: \"X-YB-Nonce\", value: authNonce },\r",
+							"        { key: \"X-YB-Sign\", value: authSignature }\r",
+							"    ],\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: authBody\r",
+							"    }\r",
+							"}, function (err, res) {\r",
+							"    if (err) {\r",
+							"        console.error(\"⚠️ Auth error:\", err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    const authResponse = res.json();\r",
+							"\r",
+							"    if (authResponse && authResponse.errorCode) {\r",
+							"        console.error(\"⚠️ Auth error:\", authResponse);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    console.log(\"✅ Auth success:\", authResponse);\r",
+							"\r",
+							"    const requestNonce = Date.now().toString();\r",
+							"\r",
+							"    forceSetHeader(\"X-YB-API-Key\", authResponse.token);\r",
+							"    forceSetHeader(\"X-YB-Nonce\", requestNonce);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/admin/symbols/query?maxResults=100",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"symbols",
+						"query"
+					],
+					"query": [
+						{
+							"key": "maxResults",
+							"value": "100"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get symbols (Timestamp)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, nonce) {\r",
+							"    return `Content=${content}\\nTimestamp=${nonce}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"function getAuthTimestamp() {\r",
+							"    const timestamp = Date.now() * 1000;\r",
+							"    return timestamp.toString();\r",
+							"}\r",
+							"\r",
+							"// Step 1: Authorize User\r",
+							"const authTimestamp = getAuthTimestamp();\r",
+							"const authBody = JSON.stringify({ \"login\": +login });\r",
+							"const authSignature = getBase64UrlHMAC(getSignInput(authBody, authTimestamp), password);\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: `${baseUrl}/api/v1/authorize`,\r",
+							"    method: \"POST\",\r",
+							"    header: [\r",
+							"        { key: \"Content-Type\", value: \"application/json\" },\r",
+							"        { key: \"X-YB-Timestamp\", value: authTimestamp },\r",
+							"        { key: \"X-YB-Sign\", value: authSignature }\r",
+							"    ],\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: authBody\r",
+							"    }\r",
+							"}, function (err, res) {\r",
+							"    if (err) {\r",
+							"        console.error(\"⚠️ Auth error:\", err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    const authResponse = res.json();\r",
+							"\r",
+							"    if (authResponse && authResponse.errorCode){\r",
+							"        console.error(\"⚠️ Auth error:\", authResponse);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    console.log(\"✅ Auth success:\", authResponse);\r",
+							"\r",
+							"    const timestamp = getAuthTimestamp();\r",
+							"\r",
+							"    forceSetHeader(\"X-YB-API-Key\", authResponse.token);\r",
+							"    forceSetHeader(\"X-YB-Timestamp\", timestamp);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/admin/symbols/query?maxResults=100",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"symbols",
+						"query"
+					],
+					"query": [
+						{
+							"key": "maxResults",
+							"value": "100"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Authorize (get token)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, authTimestamp) {\r",
+							"    return `Content=${content}\\nTimestamp=${authTimestamp}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"function getAuthTimestamp() {\r",
+							"    const timestamp = Date.now() * 1000;\r",
+							"    return timestamp.toString();\r",
+							"}\r",
+							"\r",
+							"let body = JSON.parse(pm.request.body.raw);\r",
+							"body.login = +login;\r",
+							"pm.request.body.update(JSON.stringify(body));\r",
+							"\r",
+							"// Prepare Main Request Headers\r",
+							"const requestBody = pm.request.body?.mode === \"raw\" ? pm.request.body.raw : \"\";\r",
+							"const timestamp = getAuthTimestamp();\r",
+							"const requestSignature = getBase64UrlHMAC(getSignInput(requestBody, timestamp), password);\r",
+							"\r",
+							"forceSetHeader(\"X-YB-Timestamp\", timestamp);\r",
+							"forceSetHeader(\"X-YB-Sign\", requestSignature);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"login\": 1 }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/authorize",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"authorize"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
