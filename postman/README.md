@@ -28,8 +28,7 @@ Set your `login`, `password` and `baseUrl` in the selected environment.
 
 ## Sample Collection Includes
 
-- Authoriation to get the token/apiKey
-- Add a new group (nonce/timestamp)
+- Authorization to get the token/apiKey
 - Get symbols (nonce/timestamp)
 
 
