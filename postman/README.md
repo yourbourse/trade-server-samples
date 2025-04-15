@@ -38,8 +38,7 @@ There are many pre-request-scripts defined in the examples. Please use them as i
 
 ## Web Socket examples:
 
-Unfortunettly, there is no way to export/import Web Socket examples in Postman so here are the steps to setup WS samples:
-
+Unfortunately, there is no way to export/import Web Socket examples in Postman so here are the steps to setup WS samples:
 1. Go to File -> New...
 
    ![Postman File New](../screenshots/postmanFileNew.png)
