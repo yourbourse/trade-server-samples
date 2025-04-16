@@ -3,16 +3,17 @@
 This project demonstrates how to interact with a trade server using both REST API and WebSocket protocols. The examples are implemented in JavaScript and include HTML files for testing the functionality in a browser.
 
 ## Project Structure
-. ├── apiExample.html # Example for interacting with the REST API 
-  ├── webSocketExample.html # Example for interacting with the WebSocket API 
-  ├── javascript.js # Core JavaScript functions for API and WebSocket communication 
-  ├── styles.css # Styling for the HTML pages 
-  ├── Readme.md # Project documentation
+
+    ├── apiExample.html         # Example for interacting with the REST API 
+    ├── webSocketExample.html   # Example for interacting with the WebSocket API 
+    ├── javascript.js           # Core JavaScript functions for API and WebSocket communication 
+    ├── styles.css              # Styling for the HTML pages 
+    ├── Readme.md               # Project documentation
 
 ## Prerequisites
 
 - A modern web browser that supports the `crypto.subtle` API.
-- Access to a trade server with valid credentials (login, password, and server URL).
+- Access to a trade server with valid credentials (login, password, and Trade Server Admin API).
 - Note that Trade Server API port starts with 2, Web Socket port starts with 3.
 
 ## Usage
@@ -25,7 +26,7 @@ The `apiExample.html` file demonstrates how to authenticate and fetch symbols us
 2. Fill in the following fields:
    - **Login**: Your login ID.
    - **Password**: Your password.
-   - **Server URL**: The URL of the trade server.
+   - **Trade Server Admin API**: The URL of the trade server.
 3. Select the authentication type (`Nonce` or `Timestamp`).
 4. Click **Login** to authenticate.
 5. Once logged in, click **Get Symbols** to fetch the list of symbols.
@@ -41,8 +42,8 @@ The `webSocketExample.html` file demonstrates how to connect to the WebSocket AP
 2. Fill in the following fields:
    - **Login**: Your login ID.
    - **Password**: Your password.
-   - **Server URL**: The URL of the trade server.
-   - **WS Server URL**: The WebSocket server URL.
+   - **Trade Server Admin API**: The URL of the trade server.
+   - **Tarde Server Public WebSocket URL**: The tarde server public WebSocket URL.
 3. Select the authentication type (`Nonce` or `Timestamp`).
 4. Click **Login** to authenticate.
 5. Click **Connect** to establish a WebSocket connection.

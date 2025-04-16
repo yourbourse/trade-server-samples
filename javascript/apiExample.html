@@ -16,6 +16,7 @@
             const output = document.getElementById("output");
             const loginBtn = document.getElementById("loginBtn");
             const getSymbolsBtn = document.getElementById("getSymbolsBtn");
+            const addSymbolBtn = document.getElementById("addSymbolBtn");
 
             let authType = document.querySelector('input[name="authType"]:checked').value;
             const radioButtons = document.querySelectorAll('input[name="authType"]');            
@@ -54,6 +55,7 @@
                 }
 
                 getSymbolsBtn.disabled = false;
+                addSymbolBtn.disabled = false;
                 log("Logged in. Ready to get symbols. \n");
 
                 // Assign the API key to the currentUser object
@@ -71,6 +73,29 @@
                 const result = await fetchData({
                     url: `${serverUrl}/api/v1/admin/symbols/query?maxResults=1000`,
                     method: "GET",
+                    headers,
+                    data
+                });
+            };
+
+            addSymbolBtn.onclick = async () => {
+                if (!currentUser || !serverUrl) {
+                    return
+                }
+
+                const data = Object.assign({}, symbolInitialValues, { 
+                    name: getRandomUppercaseLetters(6),
+                    path: getRandomUppercaseLetters(10),
+                    description: getRandomUppercaseLetters(10),
+                    baseCurrency: "PLN",
+                    profitCurrency: "PLN",
+                    marginCurrency: "GBP",
+                });
+                const headers = await getPOSTHeaders(currentUser, data, authType);
+
+                const result = await fetchData({
+                    url: `${serverUrl}/api/v1/admin/symbols/edit`,
+                    method: "POST",
                     headers,
                     data
                 });
@@ -105,6 +130,137 @@
             output.textContent = `\n${msg}`;
         }
 
+        function getRandomUppercaseLetters(n) {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let result = '';
+            for (let i = 0; i < n; i++) {
+                const randomIndex = Math.floor(Math.random() * letters.length);
+                result += letters[randomIndex];
+            }
+            return result;
+        }
+
+        let symbolInitialValues = {
+            id: 0,
+            version: 0,
+            name: "",
+            path: "",
+            description: "",
+            bidMarkup: 0,
+            askMarkup: 0,
+            throttling: 2,
+            spreadBalance: 0,
+            decimalPlaces: 4,
+            lotSize: 100000,
+            tickValue: 0,
+            tickSize: 0,
+            tradeMode: "Full",
+            minOrderSize: 0.00001,
+            maxOrderSize: 10000,
+            orderSizeIncrement: 0.00001,
+            maxPosition: 0,
+            allowNegativePrices: false,
+            allowRealtimeQuotes: true,
+            marketDepth: 25,
+            minSpreadFilter: 0,
+            maxSpreadFilter: 0,
+            softFilter: 100,
+            softFilterTickCount: 10,
+            hardFilter: 500,
+            hardFilterTickCount: 10,
+            discardFilter: 500,
+            gapDiff: 0,
+            gapTickCount: 0,
+            maxPriceLimit: 0,
+            minPriceLimit: 0,
+            baseCurrencyDecimalPlaces: 2,
+            profitCurrencyDecimalPlaces: 2,
+            marginCurrencyDecimalPlaces: 2,
+            marginCalcMode: "Forex",
+            profitCalcMode: "Forex",
+            stopsLevel: 5,
+            freezeLevel: 0,
+            allowMarketOrders: true,
+            allowLimitOrders: true,
+            allowStopOrders: true,
+            allowStopLimitOrders: true,
+            allowStopLossOrders: true,
+            allowTakeProfitOrders: true,
+            allowCloseByOrders: true,
+            chartMode: "BidPrice",
+            quotesTimeout: 600,
+            initialMargin: 0.0,
+            hedgedMargin: 100000,
+            maintenanceMargin: 0.0,
+            initialBuyMarginRate: 1.0,
+            initialSellMarginRate: 1.0,
+            initialBuyLimitMarginRate: 1.0,
+            initialSellLimitMarginRate: 0.0,
+            initialBuyStopMarginRate: 0.0,
+            initialSellStopMarginRate: 0.0,
+            initialBuyStopLimitMarginRate: 0.0,
+            initialSellStopLimitMarginRate: 0.0,
+            maintenanceBuyMarginRate: 0.0,
+            maintenanceSellMarginRate: 0.0,
+            maintenanceBuyLimitMarginRate: 0.0,
+            maintenanceSellLimitMarginRate: 0.0,
+            maintenanceBuyStopMarginRate: 0.0,
+            maintenanceSellStopMarginRate: 0.0,
+            maintenanceBuyStopLimitMarginRate: 0.0,
+            maintenanceSellStopLimitMarginRate: 0.0,
+            liquidityMarginRate: 0,
+            percentage: 0,
+            baseCurrency: "",
+            profitCurrency: "",
+            marginCurrency: "",
+            marginUseLargerLeg: false,
+            recalculateMarginRateAtEod: false,
+            marginCheckOnSlTp: false,
+            allowFok: true,
+            allowIoc: false,
+            allowGtc: true,
+            allowGtd: true,
+            allowDayOrders: false,
+            allowValidForMilliseconds: false,
+            swapLong: 0,
+            swapShort: 0,
+            swapRateSunday: 0,
+            swapRateMonday: 1,
+            swapRateTuesday: 1,
+            swapRateWednesday: 3,
+            swapRateThursday: 1,
+            swapRateFriday: 1,
+            swapRateSaturday: 0,
+            swapYearDays: 0,
+            swapMode: "Points",
+            startDateTime: 0,
+            endDateTime: 0,
+            exchange: "",
+            country: "",
+            webpage: "",
+            underlyingAsset: "",
+            isin: "",
+            cfi: "",
+            quoteSessions: [
+                { weekDay: "Sun", start: "00:00:00", end: "00:00:00" },
+                { weekDay: "Mon", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Tue", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Wed", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Thu", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Fri", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Sat", start: "00:00:00", end: "01:00:00" },
+            ],
+            tradeSessions: [
+                { weekDay: "Sun", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Mon", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Tue", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Wed", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Thu", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Fri", start: "00:00:00", end: "01:00:00" },
+                { weekDay: "Sat", start: "00:00:00", end: "01:00:00" },
+            ],
+        };
+
     </script>
 </head>
 
@@ -117,7 +273,7 @@
     <label for="password">Password:</label>
     <input type="password" id="password" value="xxx" />
 
-    <label for="server">Server URL:</label>
+    <label for="server">Trade Server Admin API:</label>
     <input type="text" id="server" value="https://yourbourse.trade:2xxxx"" />
 
     <label>Auth Type:</label>
@@ -128,6 +284,7 @@
     <br />
     <button id="loginBtn">Login</button>
     <button id="getSymbolsBtn" disabled>Get Symbols</button>
+    <button id="addSymbolBtn" disabled>Add Symbol</button>
 
     <pre id="output">Waiting for login...</pre>
 </body>
