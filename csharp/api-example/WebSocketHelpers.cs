@@ -1,10 +1,9 @@
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 
 namespace ApiExample;
 
-public class WebSockerHelpers
+public class WebSocketHelpers
 {
     public static async Task SendAsync(ClientWebSocket ws, string json)
     {

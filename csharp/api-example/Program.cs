@@ -6,8 +6,8 @@ using ApiExample;
 
 const int login = 1;
 const string password = "xxx";
-const string tradeServerUrl = "https://yourbourse.trade:2xxxx";
-const string wsUrl = "wss://yourbourse.trade:3xxxx/ws/v1";
+const string tradeServerAdminApiUrl = "https://yourbourse.trade:2xxxx";
+const string tradeServerPublicWsUrl = "wss://yourbourse.trade:3xxxx/ws/v1";
 
 var user = new AuthUser { ApiKey = "", Password = password };
 var symbol = new Symbol
@@ -50,7 +50,7 @@ await socket.ConnectAsync(new Uri(tradeServerPublicWsUrl), CancellationToken.Non
 Console.WriteLine($"WebSocket state after connect: {socket.State}");
 
 // Start listening in a separate task
-var listenTask = Task.Run(async () => await WebSockerHelpers.ListenWebSocket(socket, CancellationToken.None));
+var listenTask = Task.Run(async () => await WebSocketHelpers.ListenWebSocket(socket, CancellationToken.None));
 Console.WriteLine("WebSocket listener started...");
 
 Console.WriteLine("================================== Web Socket (Ping) ==================================");
@@ -66,7 +66,7 @@ var pingMessageJson =
         "reqId": "777816"
       }
       """;
-await WebSockerHelpers.SendAsync(socket, pingMessageJson);
+await WebSocketHelpers.SendAsync(socket, pingMessageJson);
 await Task.Delay(1000);
 
 Console.WriteLine("================================== Web Socket (Subscribe L1) ==================================");
@@ -87,7 +87,7 @@ var subscribeMessageJson =
           "reqId": "777816"
       }
       """;
-await WebSockerHelpers.SendAsync(socket, subscribeMessageJson);
+await WebSocketHelpers.SendAsync(socket, subscribeMessageJson);
 await Task.Delay(1000);
 
 Console.WriteLine("================================== Web Socket (Unsubscribe L1) ==================================");
@@ -107,7 +107,7 @@ var unsubscribeMessageJson =
           "reqId": "777816"
       }
       """;
-await WebSockerHelpers.SendAsync(socket, unsubscribeMessageJson);
+await WebSocketHelpers.SendAsync(socket, unsubscribeMessageJson);
 await Task.Delay(1000);
 
 // Close connection
@@ -120,7 +120,7 @@ return;
 
 async Task<ApiToken?> Authorise(int login, AuthenticationMethod authenticationMethod)
 {
-    var payload = new AuthReqeust { Login = login };
+    var payload = new AuthRequest { Login = login };
 
     using var client = new HttpClient();
 
