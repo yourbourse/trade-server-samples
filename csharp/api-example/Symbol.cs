@@ -78,7 +78,7 @@ public class Symbol
     public bool RecalculateMarginRateAtEod { get; set; }
     public bool MarginCheckOnSlTp { get; set; }
     public bool AllowFok { get; set; } = true;
-    public bool AllowIoc { get; set; } = true;
+    public bool AllowIoc { get; set; } = false;
     public bool AllowGtc { get; set; } = true;
     public bool AllowGtd { get; set; } = true;
     public bool AllowDayOrders { get; set; }
@@ -103,6 +103,25 @@ public class Symbol
     public string Isin { get; set; } = "";
     public string Cfi { get; set; } = "";
 
-    public List<Session> QuoteSessions { get; set; } = [];
-    public List<Session> TradeSessions { get; set; } = [];
+    public List<Session> QuoteSessions { get; set; } =
+    [
+        new() { WeekDay = "Sun", Start = "00:00:00", End = "00:00:00" },
+        new() { WeekDay = "Mon", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Tue", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Wed", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Thu", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Fri", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Sat", Start = "00:00:00", End = "01:00:00" }
+    ];
+
+    public List<Session> TradeSessions { get; set; } =
+    [
+        new() { WeekDay = "Sun", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Mon", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Tue", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Wed", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Thu", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Fri", Start = "00:00:00", End = "01:00:00" },
+        new() { WeekDay = "Sat", Start = "00:00:00", End = "01:00:00" }
+    ];
 }

@@ -25,7 +25,7 @@ public static class ApiHeaders
 
     private static Dictionary<string, string> GetPostHeadersWithNonce<T>(AuthUser user, T data)
     {
-        var nonce = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000;
+        var nonce = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         return new Dictionary<string, string>
         {
