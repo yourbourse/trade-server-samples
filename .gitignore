@@ -1,0 +1,6 @@
+# Build Results
+[Dd]ebug/
+[Rr]elease/
+obj/
+bin/
+.idea/

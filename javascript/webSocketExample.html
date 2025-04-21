@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Server WebSocket API Example</title>
+    <script src="javascript.js" defer></script>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            let socket = null;
+            let apiKey = null;
+            let currentUser = null;
+            let serverUrl = "";
+            let wsServerUrl = null;
+
+            const wsServer = document.getElementById("wsServer");
+            const loginInput = document.getElementById("login");
+            const passwordInput = document.getElementById("password");
+            const output = document.getElementById("output");
+            const connectBtn = document.getElementById("connectBtn");
+            const pingBtn = document.getElementById("pingBtn");
+            const subscribeBtn = document.getElementById("subscribeBtn");
+            const unsubscribeBtn = document.getElementById("unsubscribeBtn");
+            const closeBtn = document.getElementById("closeBtn");
+
+            let authType = document.querySelector('input[name="authType"]:checked').value;
+            const radioButtons = document.querySelectorAll('input[name="authType"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    authType = document.querySelector('input[name="authType"]:checked').value;
+                });
+            });
+
+            loginBtn.onclick = async () => {
+                const login = +document.getElementById("login").value.trim();
+                const password = document.getElementById("password").value.trim();
+                serverUrl = document.getElementById("server").value.trim();
+
+                if (!login || !password || !serverUrl) {
+                    log("Please fill in all fields.");
+                    return;
+                }
+
+                currentUser = { login, password };
+
+                const data = { login };
+                const headers = await getPOSTHeaders(currentUser, data, authType);
+
+                const result = await fetchData({
+                    url: `${serverUrl}/api/v1/authorize`,
+                    method: "POST",
+                    headers,
+                    data
+                });
+
+                apiKey = result.token;
+                if (!apiKey) {
+                    log("Login failed. No API key returned.");
+                    return;
+                }
+
+                connectBtn.disabled = false;
+
+                log("Logged in. Ready to get quotes from WS.\n");
+
+                // Assign the API key to the currentUser object
+                currentUser.apiKey = apiKey;
+            };
+
+            connectBtn.onclick = () => {
+                const url = wsServer.value;
+                const login = loginInput.value;
+                const password = passwordInput.value;
+
+                socket = new WebSocket(url);
+
+                socket.onopen = () => {
+                    log("✅ New WebSocket connection opened");
+                    subscribeBtn.disabled = false;
+                    unsubscribeBtn.disabled = false;
+                    closeBtn.disabled = false;
+                    pingBtn.disabled = false;
+                };
+
+                socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    log("📩 Message received: " + JSON.stringify(data, null, 2));
+                };
+
+                socket.onerror = (error) => {
+                    log("❌ WebSocket error: " + error.message);
+                };
+
+                socket.onclose = () => {
+                    log("🔌 WebSocket connection closed");
+                };
+            };
+
+            pingBtn.onclick = () => {
+                if (!socket || socket.readyState !== WebSocket.OPEN) {
+                    log("⚠️ WebSocket is not connected");
+                    return;
+                }
+
+                const pingRequest = {
+                    "m": "ping",
+                    "h": {
+                        "X-YB-API-Key": currentUser?.apiKey || "",
+                        "X-YB-LOCALE": "en"
+                    },
+                    "reqId": "777816"
+                };
+
+                socket.send(JSON.stringify(pingRequest));
+                log("➡️ Ping sent");
+            };
+
+            subscribeBtn.onclick = () => {
+                if (!socket || socket.readyState !== WebSocket.OPEN) {
+                    log("⚠️ WebSocket is not connected");
+                    return;
+                }
+
+                const subscribeRequest = {
+                    "m": "subscribe",
+                    "c": "L1",
+                    "p": {
+                        "s": "EURUSD",
+                        "streaming": false
+                    },
+                    "h": {
+                        "X-YB-API-Key": currentUser?.apiKey || "",
+                        "X-YB-LOCALE": "en"
+                    },
+                    "reqId": "777816"
+                };
+
+                socket.send(JSON.stringify(subscribeRequest));
+                log("➡️ Subscribed to EURUSD");
+            };
+
+            unsubscribeBtn.onclick = () => {
+                if (!socket || socket.readyState !== WebSocket.OPEN) {
+                    log("⚠️ WebSocket is not connected");
+                    return;
+                }
+
+                const unsubscribeRequest = {
+                    "m": "unsubscribe",
+                    "c": "L1",
+                    "p": {
+                        "s": "EURUSD"
+                    },
+                    "h": {
+                        "X-YB-API-Key": currentUser?.apiKey || "",
+                        "X-YB-LOCALE": "en"
+                    },
+                    "reqId": "777816"
+};
+
+                socket.send(JSON.stringify(unsubscribeRequest));
+                log("⬅️ Unsubscribed from EURUSD");
+            };
+
+            closeBtn.onclick = () => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.close();
+                    subscribeBtn.disabled = true;
+                    unsubscribeBtn.disabled = true;
+                    closeBtn.disabled = true;
+                    pingBtn.disabled = true;
+                }
+            };
+        
+            function log(msg) {
+                output.textContent += `\n${msg}`;
+            }
+
+            async function fetchData({ url, method = "POST", headers = {}, data }) {
+                try {
+                    const res = await fetch(url, {
+                        method,
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...headers
+                        },
+                        body: method == "GET" ? undefined : JSON.stringify(data),
+                    });
+
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+
+                    const result = await res.json();
+                    log("API response:\n" + JSON.stringify(result, null, 2));
+                    return result;
+                } catch (err) {
+                    log("Error:\n" + err.message);
+                    throw err;
+                }
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <h1>Trade Server Web Socket example in javascript</h1>
+    
+    <label for="login">Login:</label>
+    <input type="text" id="login" value="1" />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" value="xxx" />
+
+    <label for="server">Trade Server Admin API:</label>
+    <input type="text" id="server" value="https://yourbourse.trade:2xxxx" />
+
+    <label for="wsServer">WS Server URL:</label>
+    <input type="text" id="wsServer" value="wss://yourbourse.trade:3xxxx/ws/v1" />
+
+    <label>Auth Type:</label>
+    <input type="radio" name="authType" value="nonce" checked /> Nonce
+    <input type="radio" name="authType" value="timestamp" /> Timestamp
+
+
+    <br />
+    <button id="loginBtn">Login</button>
+    <button id="connectBtn" disabled>Connect</button>
+    <button id="pingBtn" disabled>Ping</button>
+
+    <button id="subscribeBtn" disabled>Subscribe</button>
+    <button id="unsubscribeBtn" disabled>Unsubscribe</button>
+    <button id="closeBtn" disabled>Close Connection</button>
+
+    <pre id="output">Status: Not connected</pre>
+</body>
+
+</html>
