@@ -10,27 +10,20 @@ const string tradeServerAdminApiUrl = "https://yourbourse.trade:2xxxx";
 const string tradeServerPublicWsUrl = "wss://yourbourse.trade:3xxxx/ws/v1";
 
 var user = new AuthUser { ApiKey = "", Password = password };
-var symbol = new Symbol
-{
-    Version = 0,
-    Name = GenerateRandomUppercaseString(6),
-    Path = GenerateRandomUppercaseString(6),
-    Description = GenerateRandomUppercaseString(10),
-    BaseCurrency = "PLN",
-    ProfitCurrency = "PLN",
-    MarginCurrency = "GBP"
-};
+var symbol1 = GetSymbol();
 Console.WriteLine("================================== Authorization (Nonce) ==================================");
 // Api examples (Nonce)
 var authNonceResponse = await Authorise(login, AuthenticationMethod.Nonce);
 user.ApiKey = authNonceResponse!.Token;
 
 Console.WriteLine("================================== Add Symbol (Nonce) ==================================");
-await AddSymbol(symbol, AuthenticationMethod.Nonce);
+await AddSymbol(symbol1, AuthenticationMethod.Nonce);
 
 Console.WriteLine("================================== Get Symbols (Nonce) ==================================");
 await QuerySymbols(AuthenticationMethod.Nonce);
 user.ApiKey = "";
+
+await Task.Delay(1000);
 
 Console.WriteLine("================================== Authorization (Timestamp) ==================================");
 // Api examples (Timestamp)
@@ -38,7 +31,8 @@ var authTimestampResponse = await Authorise(login, AuthenticationMethod.Timestam
 user.ApiKey = authTimestampResponse!.Token;
 
 Console.WriteLine("================================== Add Symbol (Timestamp) ==================================");
-await AddSymbol(symbol, AuthenticationMethod.Timestamp);
+var symbol2 = GetSymbol();
+await AddSymbol(symbol2, AuthenticationMethod.Timestamp);
 
 Console.WriteLine("================================== Get Symbols (Timestamp) ==================================");
 await QuerySymbols(AuthenticationMethod.Timestamp);
@@ -150,6 +144,9 @@ async Task AddSymbol(Symbol symbol, AuthenticationMethod authenticationMethod)
     using var client = new HttpClient();
     var headers = ApiHeaders.GetPostHeaders(user, symbol, authenticationMethod);
 
+    Console.WriteLine("------------ Add Symbol payload:");
+    Console.WriteLine(JsonSerializer.Serialize(symbol, ApiHeaders.JsonSerializerOptions));
+    
     var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(tradeServerAdminApiUrl), "/api/v1/admin/symbols/edit"))
     {
         Content = new StringContent(JsonSerializer.Serialize(symbol, ApiHeaders.JsonSerializerOptions),
@@ -200,4 +197,19 @@ static string GenerateRandomUppercaseString(int length)
     }
 
     return new string(result);
+}
+
+Symbol GetSymbol()
+{
+    return new Symbol
+    {
+        Id = 0,
+        Version = 0,
+        Name = GenerateRandomUppercaseString(6),
+        Path = "Forex/",
+        Description = GenerateRandomUppercaseString(10),
+        BaseCurrency = "AUD",
+        ProfitCurrency = "AUD",
+        MarginCurrency = "AUD",
+    };
 }
