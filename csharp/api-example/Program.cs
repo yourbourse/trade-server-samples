@@ -23,8 +23,6 @@ Console.WriteLine("================================== Get Symbols (Nonce) ======
 await QuerySymbols(AuthenticationMethod.Nonce);
 user.ApiKey = "";
 
-await Task.Delay(1000);
-
 Console.WriteLine("================================== Authorization (Timestamp) ==================================");
 // Api examples (Timestamp)
 var authTimestampResponse = await Authorise(login, AuthenticationMethod.Timestamp);
@@ -144,9 +142,6 @@ async Task AddSymbol(Symbol symbol, AuthenticationMethod authenticationMethod)
     using var client = new HttpClient();
     var headers = ApiHeaders.GetPostHeaders(user, symbol, authenticationMethod);
 
-    Console.WriteLine("------------ Add Symbol payload:");
-    Console.WriteLine(JsonSerializer.Serialize(symbol, ApiHeaders.JsonSerializerOptions));
-    
     var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(tradeServerAdminApiUrl), "/api/v1/admin/symbols/edit"))
     {
         Content = new StringContent(JsonSerializer.Serialize(symbol, ApiHeaders.JsonSerializerOptions),
