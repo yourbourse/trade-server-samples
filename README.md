@@ -4,8 +4,8 @@ This repository contains sample projects to help you integrate with the Trade Se
 
 ## Projects
 
-- **C#**: A sample project demonstrating how to interact with the Trade Server API using C#. [View the C# README](./csharp/README.md)
-- **JavaScript**: A sample project showcasing how to use JavaScript to connect to the Trade Server API. [View the JavaScript README](./javascript/README.md)
+- **C#**: A sample project demonstrating how to interact with the Trade Server API using C#. [View the C# README](./csharp/Readme.md)
+- **JavaScript**: A sample project showcasing how to use JavaScript to connect to the Trade Server API. [View the JavaScript README](./javascript/Readme.md)
 - **Postman**: A collection of Postman requests to test and interact with the Trade Server API. [View the Postman README](./postman/README.md)
 
 ## Getting Started
