@@ -25,8 +25,12 @@ public static class ApiHeaders
 
     private static Dictionary<string, string> GetPostHeadersWithNonce<T>(AuthUser user, T data)
     {
-        var nonce = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
+        // The commented one is correct and works
+        //var nonce = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        
+        // That one breaks TS instance: 
+        var nonce = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000;
+            
         return new Dictionary<string, string>
         {
             { "X-YB-Nonce", nonce.ToString() },
