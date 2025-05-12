@@ -12,7 +12,6 @@ This project demonstrates how to interact with a trade server using both REST AP
 
 ## Prerequisites
 
-- A modern web browser that supports the `crypto.subtle` API.
 - Access to a trade server with valid credentials (login, password, and Trade Server Admin API).
 - Note that Trade Server API port starts with 2, Web Socket port starts with 3.
 
