@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trade Server API Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <script src="javascript.js" defer></script>
     <link rel="stylesheet" href="styles.css">
     <script type="text/javascript">
@@ -39,7 +40,7 @@
                 currentUser = { login, password };
 
                 const data = { login };
-                const headers = await getPOSTHeaders(currentUser, data, authType);
+                const headers = getPOSTHeaders(currentUser, data, authType);
 
                 const result = await fetchData({
                     url: `${serverUrl}/api/v1/authorize`,
@@ -68,7 +69,7 @@
                 }
 
                 const data = {};
-                const headers = await getPOSTHeaders(currentUser, data, authType);
+                const headers = getPOSTHeaders(currentUser, data, authType);
 
                 const result = await fetchData({
                     url: `${serverUrl}/api/v1/admin/symbols/query?maxResults=1000`,
@@ -91,7 +92,7 @@
                     profitCurrency: "PLN",
                     marginCurrency: "GBP",
                 });
-                const headers = await getPOSTHeaders(currentUser, data, authType);
+                const headers = getPOSTHeaders(currentUser, data, authType);
 
                 const result = await fetchData({
                     url: `${serverUrl}/api/v1/admin/symbols/edit`,

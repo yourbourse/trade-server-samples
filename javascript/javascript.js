@@ -1,16 +1,8 @@
-async function getHMACDigest(secret, body) {
-    const enc = new TextEncoder();
-    // It uses the browser's crypto.subtle API for HMAC (instead of Node.js crypto module)
-    const key = await crypto.subtle.importKey(
-      "raw",
-      enc.encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-
-    const signature = await crypto.subtle.sign("HMAC", key, enc.encode(body));
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+  // This function is used to get the HMAC digest of a given body using a secret key
+  // It uses the CryptoJS library to perform the HMAC SHA256 hashing and then encodes it in Base64 URL format
+  function getHMACDigest(secret, body) {
+    const hash = CryptoJS.HmacSHA256(body, secret);
+    const base64 = CryptoJS.enc.Base64.stringify(hash);
     return toBase64Url(base64);
   }
 
@@ -32,18 +24,18 @@ async function getHMACDigest(secret, body) {
     };
   }
 
-  async function getPOSTHeaders(user, data, authenticationMethod = "nonce") {
+  function getPOSTHeaders(user, data, authenticationMethod = "nonce") {
     if (authenticationMethod === "timestamp") {
-      return await getPOSTHeadersWithTimestamp(user, data);
+      return getPOSTHeadersWithTimestamp(user, data);
     } else {
-      return await getPOSTHeadersWithNonce(user, data);
+      return getPOSTHeadersWithNonce(user, data);
     }
   }
 
-  async function getPOSTHeadersWithNonce(user, data) {
+  function getPOSTHeadersWithNonce(user, data) {
     const nonce = Date.now().toString();
     const body = `Content=${JSON.stringify(data)}\nNonce=${nonce}`;
-    const sign = await getHMACDigest(user.password, body);
+    const sign = getHMACDigest(user.password, body);
 
     return {
       "X-YB-Nonce": nonce,
@@ -52,10 +44,10 @@ async function getHMACDigest(secret, body) {
     };
   }
 
-  async function getPOSTHeadersWithTimestamp(user, data) {
+  function getPOSTHeadersWithTimestamp(user, data) {
     const timestamp = Date.now() * 1000;
     const body = `Content=${JSON.stringify(data)}\nTimestamp=${timestamp}`;
-    const sign = await getHMACDigest(user.password, body);
+    const sign = getHMACDigest(user.password, body);
 
     return {
       "X-YB-Timestamp": timestamp.toString(),
