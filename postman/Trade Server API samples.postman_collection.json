@@ -607,6 +607,1010 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Place order",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"if (!login || !password || !baseUrl) {\r",
+							"    throw new Error(\"Environment variables 'login' or 'password' or 'baseUrl' are missing!. Use proper environment setup!\");\r",
+							"}\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, authTimestamp) {\r",
+							"    return `Content=${content}\\nTimestamp=${authTimestamp}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"function getAuthTimestamp() {\r",
+							"    const timestamp = Date.now() * 1000;\r",
+							"    return timestamp.toString();\r",
+							"}\r",
+							"\r",
+							"// Step 1: Authorize User\r",
+							"const authTimestamp = getAuthTimestamp();\r",
+							"const authBody = JSON.stringify({ \"login\": +login });\r",
+							"const authSignature = getBase64UrlHMAC(getSignInput(authBody, authTimestamp), password);\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: `${baseUrl}/api/v1/authorize`,\r",
+							"    method: \"POST\",\r",
+							"    header: [\r",
+							"        { key: \"Content-Type\", value: \"application/json\" },\r",
+							"        { key: \"X-YB-Timestamp\", value: authTimestamp },\r",
+							"        { key: \"X-YB-Sign\", value: authSignature }\r",
+							"    ],\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: authBody\r",
+							"    }\r",
+							"}, function (err, res) {\r",
+							"    if (err) {\r",
+							"        console.error(\"⚠️ Auth error:\", err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    const authResponse = res.json();\r",
+							"\r",
+							"    if (authResponse && authResponse.errorCode){\r",
+							"        console.error(\"⚠️ Auth error:\", authResponse);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    console.log(\"✅ Auth success:\", authResponse);\r",
+							"    \r",
+							"    let body = JSON.parse(pm.request.body.raw);\r",
+							"    body.name = body.name + \"_\" + Date.now().toString();\r",
+							"    pm.request.body.update(JSON.stringify(body));\r",
+							"\r",
+							"    // Step 2: Prepare Main Request Headers\r",
+							"    const requestBody = pm.request.body?.mode === \"raw\" ? pm.request.body.raw : \"\";\r",
+							"    const timestamp = getAuthTimestamp();\r",
+							"    const requestSignature = getBase64UrlHMAC(getSignInput(requestBody, timestamp), password);\r",
+							"\r",
+							"    forceSetHeader(\"X-YB-API-Key\", authResponse.token);\r",
+							"    forceSetHeader(\"X-YB-Timestamp\", timestamp);\r",
+							"    forceSetHeader(\"X-YB-Sign\", requestSignature);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"A\": 2,\n  \"S\": \"sell\",\n  \"mc\": true,\n  \"q\": 0.1,\n  \"s\": \"EURUSD\",\n  \"t\": \"Market\",\n  \"tif\": \"GTC\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/orders/edit",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"orders",
+						"edit"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Place market order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"A\": 11,\n  \"S\": \"sell\",\n  \"mc\": true,\n  \"q\": 0.1,\n  \"s\": \"EURUSD\",\n  \"t\": \"Market\",\n  \"tif\": \"GTC\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Place market order (public)",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"s\": \"EURUSD\",\n  \"q\": 0.1,\n  \"S\": \"sell\",\n  \"t\": \"Market\",\n  \"tif\": \"GTC\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{publicBaseUrl}}/order",
+							"host": [
+								"{{publicBaseUrl}}"
+							],
+							"path": [
+								"order"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Place limit order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"A\": 11,\n  \"S\": \"buy\",\n  \"mc\": true,\n  \"q\": 0.1,\n  \"s\": \"EURUSD\",\n  \"t\": \"Limit\",\n  \"tif\": \"GTC\",\n  \"lp\": 0.9\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Place limit order (public)",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"S\": \"buy\",\n  \"mc\": true,\n  \"q\": 0.1,\n  \"s\": \"EURUSD\",\n  \"t\": \"Limit\",\n  \"tif\": \"GTC\",\n  \"lp\": 0.9\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{publicBaseUrl}}/order",
+							"host": [
+								"{{publicBaseUrl}}"
+							],
+							"path": [
+								"order"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Place stop order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"A\": 2,\n  \"S\": \"sell\",\n  \"mc\": true,\n  \"q\": 0.1,\n  \"s\": \"EURUSD\",\n  \"t\": \"Stop\",\n  \"tif\": \"GTC\",\n  \"sp\": 1.3\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Place stop-limit order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"A\": 2,\n  \"S\": \"sell\",\n  \"mc\": true,\n  \"q\": 0.1,\n  \"s\": \"EURUSD\",\n  \"t\": \"StopLimit\",\n  \"tif\": \"GTC\",\n  \"sp\": 0.9,\n  \"lp\": 0.8\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Place close-by order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"A\": 2,\n  \"S\": \"sell\",\n  \"mc\": true,\n  \"q\": 0.1,\n  \"s\": \"EURUSD\",\n  \"t\": \"CloseBy\",\n  \"tif\": \"GTC\",\n  \"pi\": 1,\n  \"pbi\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				}
+			]
+		},
+		{
+			"name": "Modify order",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"if (!login || !password || !baseUrl) {\r",
+							"    throw new Error(\"Environment variables 'login' or 'password' or 'baseUrl' are missing!. Use proper environment setup!\");\r",
+							"}\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, authTimestamp) {\r",
+							"    return `Content=${content}\\nTimestamp=${authTimestamp}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"function getAuthTimestamp() {\r",
+							"    const timestamp = Date.now() * 1000;\r",
+							"    return timestamp.toString();\r",
+							"}\r",
+							"\r",
+							"// Step 1: Authorize User\r",
+							"const authTimestamp = getAuthTimestamp();\r",
+							"const authBody = JSON.stringify({ \"login\": +login });\r",
+							"const authSignature = getBase64UrlHMAC(getSignInput(authBody, authTimestamp), password);\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: `${baseUrl}/api/v1/authorize`,\r",
+							"    method: \"POST\",\r",
+							"    header: [\r",
+							"        { key: \"Content-Type\", value: \"application/json\" },\r",
+							"        { key: \"X-YB-Timestamp\", value: authTimestamp },\r",
+							"        { key: \"X-YB-Sign\", value: authSignature }\r",
+							"    ],\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: authBody\r",
+							"    }\r",
+							"}, function (err, res) {\r",
+							"    if (err) {\r",
+							"        console.error(\"⚠️ Auth error:\", err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    const authResponse = res.json();\r",
+							"\r",
+							"    if (authResponse && authResponse.errorCode){\r",
+							"        console.error(\"⚠️ Auth error:\", authResponse);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    console.log(\"✅ Auth success:\", authResponse);\r",
+							"    \r",
+							"    let body = JSON.parse(pm.request.body.raw);\r",
+							"    body.name = body.name + \"_\" + Date.now().toString();\r",
+							"    pm.request.body.update(JSON.stringify(body));\r",
+							"\r",
+							"    // Step 2: Prepare Main Request Headers\r",
+							"    const requestBody = pm.request.body?.mode === \"raw\" ? pm.request.body.raw : \"\";\r",
+							"    const timestamp = getAuthTimestamp();\r",
+							"    const requestSignature = getBase64UrlHMAC(getSignInput(requestBody, timestamp), password);\r",
+							"\r",
+							"    forceSetHeader(\"X-YB-API-Key\", authResponse.token);\r",
+							"    forceSetHeader(\"X-YB-Timestamp\", timestamp);\r",
+							"    forceSetHeader(\"X-YB-Sign\", requestSignature);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": 227915350409445,\n    \"A\": 2,\n    \"mc\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/orders/edit",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"orders",
+						"edit"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Modify market order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 227915350409445,\n    \"A\": 2,\n    \"mc\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Modify limit order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 227915350409445,\n    \"A\": 2,\n    \"mc\": true,\n    \"lp\": 0.7\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Modify limit order (public)",
+					"originalRequest": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 227915350409505,\n    \"lp\": 0.6\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{publicBaseUrl}}/order",
+							"host": [
+								"{{publicBaseUrl}}"
+							],
+							"path": [
+								"order"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Modify stop order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 227915350409445,\n    \"A\": 2,\n    \"mc\": true,\n    \"sp\": 0.7\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Modify stop-price order",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 227915350409445,\n    \"A\": 2,\n    \"mc\": true,\n    \"sp\": 0.7,\n    \"lp\": 0.7\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/orders/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"orders",
+								"edit"
+							]
+						}
+					},
+					"_postman_previewlanguage": "Text",
+					"header": [],
+					"cookie": [],
+					"body": ""
+				}
+			]
+		},
+		{
+			"name": "Cancel order",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"if (!login || !password || !baseUrl) {\r",
+							"    throw new Error(\"Environment variables 'login' or 'password' or 'baseUrl' are missing!. Use proper environment setup!\");\r",
+							"}\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, authTimestamp) {\r",
+							"    return `Content=${content}\\nTimestamp=${authTimestamp}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"function getAuthTimestamp() {\r",
+							"    const timestamp = Date.now() * 1000;\r",
+							"    return timestamp.toString();\r",
+							"}\r",
+							"\r",
+							"// Step 1: Authorize User\r",
+							"const authTimestamp = getAuthTimestamp();\r",
+							"const authBody = JSON.stringify({ \"login\": +login });\r",
+							"const authSignature = getBase64UrlHMAC(getSignInput(authBody, authTimestamp), password);\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: `${baseUrl}/api/v1/authorize`,\r",
+							"    method: \"POST\",\r",
+							"    header: [\r",
+							"        { key: \"Content-Type\", value: \"application/json\" },\r",
+							"        { key: \"X-YB-Timestamp\", value: authTimestamp },\r",
+							"        { key: \"X-YB-Sign\", value: authSignature }\r",
+							"    ],\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: authBody\r",
+							"    }\r",
+							"}, function (err, res) {\r",
+							"    if (err) {\r",
+							"        console.error(\"⚠️ Auth error:\", err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    const authResponse = res.json();\r",
+							"\r",
+							"    if (authResponse && authResponse.errorCode){\r",
+							"        console.error(\"⚠️ Auth error:\", authResponse);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    console.log(\"✅ Auth success:\", authResponse);\r",
+							"    \r",
+							"    let body = JSON.parse(pm.request.body.raw);\r",
+							"    body.name = body.name + \"_\" + Date.now().toString();\r",
+							"    pm.request.body.update(JSON.stringify(body));\r",
+							"\r",
+							"    // Step 2: Prepare Main Request Headers\r",
+							"    const requestBody = pm.request.body?.mode === \"raw\" ? pm.request.body.raw : \"\";\r",
+							"    const timestamp = getAuthTimestamp();\r",
+							"    const requestSignature = getBase64UrlHMAC(getSignInput(requestBody, timestamp), password);\r",
+							"\r",
+							"    forceSetHeader(\"X-YB-API-Key\", authResponse.token);\r",
+							"    forceSetHeader(\"X-YB-Timestamp\", timestamp);\r",
+							"    forceSetHeader(\"X-YB-Sign\", requestSignature);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": 227906550759963,\n    \"A\": 11\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/orders/delete",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"admin",
+						"orders",
+						"delete"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cancel order (public)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const login = pm.environment.get(\"login\");\r",
+							"const password = pm.environment.get(\"password\");\r",
+							"const baseUrl = pm.environment.get(\"baseUrl\");\r",
+							"const crypto = require('crypto-js');\r",
+							"\r",
+							"if (!login || !password || !baseUrl) {\r",
+							"    throw new Error(\"Environment variables 'login' or 'password' or 'baseUrl' are missing!. Use proper environment setup!\");\r",
+							"}\r",
+							"\r",
+							"function getBase64UrlHMAC(message, secret) {\r",
+							"    const hmac = crypto.HmacSHA256(message, secret);\r",
+							"    const base64 = crypto.enc.Base64.stringify(hmac);\r",
+							"    return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"}\r",
+							"\r",
+							"function getSignInput(content, authTimestamp) {\r",
+							"    return `Content=${content}\\nTimestamp=${authTimestamp}`;\r",
+							"}\r",
+							"\r",
+							"function forceSetHeader(key, value) {\r",
+							"    let existingIndex = pm.request.headers.toJSON().findIndex(h => h.key.toLowerCase() === key.toLowerCase());\r",
+							"    if (existingIndex !== -1) {\r",
+							"        pm.request.headers.remove(key);\r",
+							"    }\r",
+							"\r",
+							"    pm.request.headers.add({ key, value });\r",
+							"}\r",
+							"\r",
+							"function getAuthTimestamp() {\r",
+							"    const timestamp = Date.now() * 1000;\r",
+							"    return timestamp.toString();\r",
+							"}\r",
+							"\r",
+							"// Step 1: Authorize User\r",
+							"const authTimestamp = getAuthTimestamp();\r",
+							"const authBody = JSON.stringify({ \"login\": +login });\r",
+							"const authSignature = getBase64UrlHMAC(getSignInput(authBody, authTimestamp), password);\r",
+							"\r",
+							"pm.sendRequest({\r",
+							"    url: `${baseUrl}/api/v1/authorize`,\r",
+							"    method: \"POST\",\r",
+							"    header: [\r",
+							"        { key: \"Content-Type\", value: \"application/json\" },\r",
+							"        { key: \"X-YB-Timestamp\", value: authTimestamp },\r",
+							"        { key: \"X-YB-Sign\", value: authSignature }\r",
+							"    ],\r",
+							"    body: {\r",
+							"        mode: \"raw\",\r",
+							"        raw: authBody\r",
+							"    }\r",
+							"}, function (err, res) {\r",
+							"    if (err) {\r",
+							"        console.error(\"⚠️ Auth error:\", err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    const authResponse = res.json();\r",
+							"\r",
+							"    if (authResponse && authResponse.errorCode){\r",
+							"        console.error(\"⚠️ Auth error:\", authResponse);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    console.log(\"✅ Auth success:\", authResponse);\r",
+							"    \r",
+							"    let body = JSON.parse(pm.request.body.raw);\r",
+							"    body.name = body.name + \"_\" + Date.now().toString();\r",
+							"    pm.request.body.update(JSON.stringify(body));\r",
+							"\r",
+							"    // Step 2: Prepare Main Request Headers\r",
+							"    const requestBody = pm.request.body?.mode === \"raw\" ? pm.request.body.raw : \"\";\r",
+							"    const timestamp = getAuthTimestamp();\r",
+							"    const requestSignature = getBase64UrlHMAC(getSignInput(requestBody, timestamp), password);\r",
+							"\r",
+							"    forceSetHeader(\"X-YB-API-Key\", authResponse.token);\r",
+							"    forceSetHeader(\"X-YB-Timestamp\", timestamp);\r",
+							"    forceSetHeader(\"X-YB-Sign\", requestSignature);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{publicBaseUrl}}/order/227915350409505",
+					"host": [
+						"{{publicBaseUrl}}"
+					],
+					"path": [
+						"order",
+						"227915350409505"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

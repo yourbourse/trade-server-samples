@@ -15,8 +15,13 @@ This directory contains Postman collections and environment files to help you te
    - Import environment files from `/postman/*.postman_environment.json`.
 3. **Set Up Authentication**:
    - Choose between **Nonce-based auth** or **Timestamp-based auth** examples.
-   - Configure `login`, `password` and `baseUrl` in the imported environment.
+   - Configure `login`, `password`, `baseUrl`, and if using public endpoints also set `publicBaseUrl`.
 
+## Set proper environment
+
+Once you import files from `/postman/*.postman_environment.json` you can choose the proper Env like in the following screenshot:
+
+![Postman Setup Env](../screenshots/postmanSetupEnv.png)
 
 ## Authentication
 
@@ -24,13 +29,13 @@ You can use either:
 - **Nonce-based auth** examples or
 - **Timestamp-based auth** examples
 
-Set your `login`, `password` and `baseUrl` in the selected environment.
+Set `login`, `password`, `baseUrl` in the selected environment. For the `TS server` collection, you may also set `publicBaseUrl`.
 
-## Sample Collection Includes
+## Sample Collections Include
 
 - Authorization to get the token/apiKey
 - Get symbols (nonce/timestamp)
-
+- TS server: authorize, place/modify/cancel order examples (both admin and public variants)
 
 ## Scripts
 
