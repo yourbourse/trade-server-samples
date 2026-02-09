@@ -24,34 +24,34 @@
     };
   }
 
-  function getPOSTHeaders(user, data, authenticationMethod = "nonce") {
+  function getPOSTHeaders(user, data, authenticationMethod = "nonce", signWith = "signingToken") {
+    let _body = "";
+    let headers = {};
     if (authenticationMethod === "timestamp") {
-      return getPOSTHeadersWithTimestamp(user, data);
+      const {body, timestamp} = createBodyAndTimestamp(data);
+      headers["X-YB-Timestamp"] = timestamp;
+      _body = body;
     } else {
-      return getPOSTHeadersWithNonce(user, data);
+      const {body, nonce} = createBodyAndNonce(data);
+      headers["X-YB-Nonce"] = nonce;
+      _body = body;
     }
+    const sign = getHMACDigest(user[signWith], _body);
+    return {
+      ...headers,
+      "X-YB-API-Key": user.apiKey,
+      "X-YB-Sign": sign,
+    };
   }
 
-  function getPOSTHeadersWithNonce(user, data) {
+  function createBodyAndNonce(data) {
     const nonce = Date.now().toString();
     const body = `Content=${JSON.stringify(data)}\nNonce=${nonce}`;
-    const sign = getHMACDigest(user.password, body);
-
-    return {
-      "X-YB-Nonce": nonce,
-      "X-YB-API-Key": user.apiKey,
-      "X-YB-Sign": sign,
-    };
+    return {body, nonce};
   }
 
-  function getPOSTHeadersWithTimestamp(user, data) {
+  function createBodyAndTimestamp(data) {
     const timestamp = Date.now() * 1000;
     const body = `Content=${JSON.stringify(data)}\nTimestamp=${timestamp}`;
-    const sign = getHMACDigest(user.password, body);
-
-    return {
-      "X-YB-Timestamp": timestamp.toString(),
-      "X-YB-API-Key": user.apiKey,
-      "X-YB-Sign": sign,
-    };
+    return {body, timestamp};
   }
