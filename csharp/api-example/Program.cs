@@ -9,34 +9,28 @@ const string password = "xxx";
 const string tradeServerAdminApiUrl = "https://yourbourse.trade:2xxxx";
 const string tradeServerPublicWsUrl = "wss://yourbourse.trade:3xxxx/ws/v1";
 
-var user = new AuthUser { ApiKey = "", Password = password };
 var symbol1 = GetSymbol();
+
 Console.WriteLine("================================== Authorization (Nonce) ==================================");
 // Api examples (Nonce)
-var authNonceResponse = await Authorise(login, AuthenticationMethod.Nonce);
-user.ApiKey = authNonceResponse!.Token;
-user.SigningToken = authNonceResponse.SigningToken;
+var user = await Authorise(login, password, AuthenticationMethod.Nonce);
 
 Console.WriteLine("================================== Add Symbol (Nonce) ==================================");
-await AddSymbol(symbol1, AuthenticationMethod.Nonce);
+await AddSymbol(user, symbol1, AuthenticationMethod.Nonce);
 
 Console.WriteLine("================================== Get Symbols (Nonce) ==================================");
-await QuerySymbols(AuthenticationMethod.Nonce);
-user.ApiKey = "";
-user.SigningToken = null;
+await QuerySymbols(user, AuthenticationMethod.Nonce);
 
 Console.WriteLine("================================== Authorization (Timestamp) ==================================");
 // Api examples (Timestamp)
-var authTimestampResponse = await Authorise(login, AuthenticationMethod.Timestamp);
-user.ApiKey = authTimestampResponse!.Token;
-user.SigningToken = authTimestampResponse.SigningToken;
+user = await Authorise(login, password, AuthenticationMethod.Timestamp);
 
 Console.WriteLine("================================== Add Symbol (Timestamp) ==================================");
 var symbol2 = GetSymbol();
-await AddSymbol(symbol2, AuthenticationMethod.Timestamp);
+await AddSymbol(user, symbol2, AuthenticationMethod.Timestamp);
 
 Console.WriteLine("================================== Get Symbols (Timestamp) ==================================");
-await QuerySymbols(AuthenticationMethod.Timestamp);
+await QuerySymbols(user, AuthenticationMethod.Timestamp);
 
 Console.WriteLine("================================== Web Socket connect ==================================");
 // WebSocket examples
@@ -113,7 +107,7 @@ await listenTask;
 
 return;
 
-async Task<ApiToken?> Authorise(int login, AuthenticationMethod authenticationMethod)
+async Task<AuthUser> Authorise(int login, string password, AuthenticationMethod authenticationMethod)
 {
     var payload = new AuthRequest { Login = login };
 
@@ -125,7 +119,7 @@ async Task<ApiToken?> Authorise(int login, AuthenticationMethod authenticationMe
             Encoding.UTF8, "application/json")
     };
 
-    var headers = ApiHeaders.GetPostHeaders(user, payload, authenticationMethod);
+    var headers = ApiHeaders.GetAuthorizationHeaders(password, payload, authenticationMethod);
     foreach (var header in headers)
     {
         request.Headers.Add(header.Key, header.Value);
@@ -137,13 +131,19 @@ async Task<ApiToken?> Authorise(int login, AuthenticationMethod authenticationMe
     Console.WriteLine("Response:");
     Console.WriteLine(responseContent);
 
-    return await response.Content.ReadFromJsonAsync<ApiToken>();
+    var apiToken = await response.Content.ReadFromJsonAsync<ApiToken>();
+    
+    return new AuthUser
+    {
+        ApiKey = apiToken!.Token,
+        SigningToken = apiToken.SigningToken
+    };
 }
 
-async Task AddSymbol(Symbol symbol, AuthenticationMethod authenticationMethod)
+async Task AddSymbol(AuthUser authUser, Symbol symbol, AuthenticationMethod authenticationMethod)
 {
     using var client = new HttpClient();
-    var headers = ApiHeaders.GetPostHeaders(user, symbol, authenticationMethod);
+    var headers = ApiHeaders.GetApiPostHeaders(authUser, symbol, authenticationMethod);
 
     var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(tradeServerAdminApiUrl), "/api/v1/admin/symbols/edit"))
     {
@@ -163,10 +163,10 @@ async Task AddSymbol(Symbol symbol, AuthenticationMethod authenticationMethod)
     Console.WriteLine(responseContent);
 }
 
-async Task QuerySymbols(AuthenticationMethod authenticationMethod)
+async Task QuerySymbols(AuthUser authUser, AuthenticationMethod authenticationMethod)
 {
     using var client = new HttpClient();
-    var headers = ApiHeaders.GetPostHeaders(user, "", authenticationMethod);
+    var headers = ApiHeaders.GetApiGetHeaders(authUser);
 
     var request = new HttpRequestMessage(HttpMethod.Get,
         new Uri(new Uri(tradeServerAdminApiUrl), "/api/v1/admin/symbols/query?maxResults=1000"));
