@@ -26,24 +26,26 @@ public static class ApiHeaders
     private static Dictionary<string, string> GetPostHeadersWithNonce<T>(AuthUser user, T data)
     {
         var nonce = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var secret = user?.SigningToken ?? user?.Password ?? string.Empty;
 
         return new Dictionary<string, string>
         {
             { "X-YB-Nonce", nonce.ToString() },
             { "X-YB-API-Key", user?.ApiKey ?? string.Empty },
-            { "X-YB-Sign", GetHmacDigest(user?.Password ?? string.Empty, $"Content={JsonSerializer.Serialize(data, JsonSerializerOptions)}\nNonce={nonce}") }
+            { "X-YB-Sign", GetHmacDigest(secret, $"Content={JsonSerializer.Serialize(data, JsonSerializerOptions)}\nNonce={nonce}") }
         };
     }
 
     private static Dictionary<string, string> GetPostHeadersWithTimestamp<T>(AuthUser user, T data)
     {
         var timestampInMicroseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000;
+        var secret = user?.SigningToken ?? user?.Password ?? string.Empty;
 
         return new Dictionary<string, string>
         {
             { "X-YB-Timestamp", timestampInMicroseconds.ToString() },
             { "X-YB-API-Key", user?.ApiKey ?? string.Empty },
-            { "X-YB-Sign", GetHmacDigest(user?.Password ?? string.Empty, $"Content={JsonSerializer.Serialize(data, JsonSerializerOptions)}\nTimestamp={timestampInMicroseconds}") }
+            { "X-YB-Sign", GetHmacDigest(secret, $"Content={JsonSerializer.Serialize(data, JsonSerializerOptions)}\nTimestamp={timestampInMicroseconds}") }
         };
     }
 

@@ -85,9 +85,17 @@ dotnet run
 * **Nonce**: A one-time token-based authentication.
 * **Timestamp**: A time-based token authentication.
 - Examples of both methods are provided in the `Program.cs` file.
+
+**Authentication Flow**:
+1. The initial authorization request uses the user's password to sign the request.
+2. The authorization response returns both an API token (`Token`) and a signing token (`SigningToken`).
+3. All subsequent API requests use the `SigningToken` (not the password) to generate the `X-YB-Sign` header.
+
   Authenticate using Nonce:
     ```csharp
     var authNonceResponse = await Authorise(login, AuthenticationMethod.Nonce);
+    user.ApiKey = authNonceResponse.Token;
+    user.SigningToken = authNonceResponse.SigningToken;
     ```
 
 ### Querying Symbols
@@ -178,7 +186,8 @@ var listenTask = Task.Run(async () => await WebSockerHelpers.ListenWebSocket(soc
 
 ## Notes
 
-- Ensure that the API key and credentials are kept secure and not hardcoded in production environments.
+- Ensure that the API key, signing token, and credentials are kept secure and not hardcoded in production environments.
+- The signing token (`SigningToken`) is used to sign all API requests after the initial authorization. This separates the user's password from the ongoing API communication.
 - Handle WebSocket errors and disconnections gracefully in real-world applications.
 - Trade Server API port starts with 2, Web Socket port starts with 3.
 

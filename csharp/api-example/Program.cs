@@ -15,6 +15,7 @@ Console.WriteLine("================================== Authorization (Nonce) ====
 // Api examples (Nonce)
 var authNonceResponse = await Authorise(login, AuthenticationMethod.Nonce);
 user.ApiKey = authNonceResponse!.Token;
+user.SigningToken = authNonceResponse.SigningToken;
 
 Console.WriteLine("================================== Add Symbol (Nonce) ==================================");
 await AddSymbol(symbol1, AuthenticationMethod.Nonce);
@@ -22,11 +23,13 @@ await AddSymbol(symbol1, AuthenticationMethod.Nonce);
 Console.WriteLine("================================== Get Symbols (Nonce) ==================================");
 await QuerySymbols(AuthenticationMethod.Nonce);
 user.ApiKey = "";
+user.SigningToken = null;
 
 Console.WriteLine("================================== Authorization (Timestamp) ==================================");
 // Api examples (Timestamp)
 var authTimestampResponse = await Authorise(login, AuthenticationMethod.Timestamp);
 user.ApiKey = authTimestampResponse!.Token;
+user.SigningToken = authTimestampResponse.SigningToken;
 
 Console.WriteLine("================================== Add Symbol (Timestamp) ==================================");
 var symbol2 = GetSymbol();
