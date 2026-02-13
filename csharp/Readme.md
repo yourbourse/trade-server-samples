@@ -36,13 +36,19 @@ This project demonstrates how to interact with a trading server using both HTTP 
 
 ## Project Structure
 
-- **`WebSockerHelpers.cs`**:
+- **`ApiHeaders.cs`**:
+    - Contains methods for generating HTTP headers for authentication and API requests.
+    - `GetAuthorizationHeaders()` - generates headers for authorization (uses password).
+    - `GetApiGetHeaders()` and `GetApiPostHeaders()` - generate headers for API calls (use signingToken).
+- **`AuthUser.cs`**:
+    - Represents an authenticated session containing ApiKey and SigningToken (no password).
+- **`WebSocketHelpers.cs`**:
     - Contains helper methods for sending and receiving WebSocket messages.
 - **`Program.cs`**:
     - The main entry point of the application, demonstrating API and WebSocket usage.
 - **`AuthenticationMethod.cs`**:
     - Defines the `AuthenticationMethod` enum for specifying authentication types.
-- **`Readme.md`**:
+- **`README.md`**:
     - Documentation for the project.
 
 ## Setup and Configuration
@@ -85,9 +91,24 @@ dotnet run
 * **Nonce**: A one-time token-based authentication.
 * **Timestamp**: A time-based token authentication.
 - Examples of both methods are provided in the `Program.cs` file.
-  Authenticate using Nonce:
+
+**Authentication Flow**:
+1. Call `Authorise()` with login, password, and authentication method.
+2. The authorization uses `ApiHeaders.GetAuthorizationHeaders()` which signs the request with the password.
+3. The server responds with an `ApiToken` containing both `Token` (API key) and `SigningToken`.
+4. Create an `AuthUser` object with these tokens - **the password is never stored in the session**.
+5. All subsequent API calls use `ApiHeaders.GetApiPostHeaders()` or `GetApiGetHeaders()` which automatically sign requests using the `SigningToken` from the session.
+
+This architecture makes it **impossible** to accidentally use the password after authorization.
+
+  Authenticate and create a session:
     ```csharp
-    var authNonceResponse = await Authorise(login, AuthenticationMethod.Nonce);
+    var user = await Authorise(login, password, AuthenticationMethod.Nonce);
+    // user contains only ApiKey and SigningToken - no password
+    
+    // All API calls now use the user
+    await AddSymbol(user, symbol, AuthenticationMethod.Nonce);
+    await QuerySymbols(user, AuthenticationMethod.Nonce);
     ```
 
 ### Querying Symbols
@@ -95,7 +116,7 @@ dotnet run
 - The response is logged to the console.
 - Example:
   ```csharp
-  await QuerySymbols(authNonceResponse.Token, AuthenticationMethod.Nonce);
+  await QuerySymbols(user, AuthenticationMethod.Nonce);
   ```
   
 ### WebSocket Communication
@@ -153,12 +174,12 @@ dotnet run
 
 Sending WebSocket messages:
 ```csharp
-await WebSockerHelpers.SendAsync(socket, pingMessageJson);
+await WebSocketHelpers.SendAsync(socket, pingMessageJson);
 ```
   
 Receiving WebSocket messages:
 ```csharp
-var listenTask = Task.Run(async () => await WebSockerHelpers.ListenWebSocket(socket, CancellationToken.None));
+var listenTask = Task.Run(async () => await WebSocketHelpers.ListenWebSocket(socket, CancellationToken.None));
 ```
 
 ## Requirements
@@ -178,7 +199,11 @@ var listenTask = Task.Run(async () => await WebSockerHelpers.ListenWebSocket(soc
 
 ## Notes
 
-- Ensure that the API key and credentials are kept secure and not hardcoded in production environments.
+- Ensure that credentials are kept secure and not hardcoded in production environments.
+- **Architecture design**: The `AuthUser` class contains only API credentials (ApiKey and SigningToken), never the password. This separation ensures the password is used exclusively for authorization.
+- Authorization requests use `GetAuthorizationHeaders(password, ...)` which signs with the password.
+- All API requests use `GetApiPostHeaders(user, ...)` or `GetApiGetHeaders(user)` which sign with the signingToken.
+- This type-safe design makes it impossible to accidentally use the password for API calls.
 - Handle WebSocket errors and disconnections gracefully in real-world applications.
 - Trade Server API port starts with 2, Web Socket port starts with 3.
 
