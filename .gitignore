@@ -5,3 +5,6 @@ obj/
 bin/
 .idea/
 /csharp/dotnet.sln.DotSettings.user
+
+# Written by the Kiota example's build
+/csharp/kiota-example/Generated/

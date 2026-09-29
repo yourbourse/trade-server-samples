@@ -1,0 +1,120 @@
+<Project>
+
+    <PropertyGroup>
+        <TRADE_SERVER_DOCS_URL Condition="'$(TRADE_SERVER_DOCS_URL)' == ''">https://docs.yourbourse.trade</TRADE_SERVER_DOCS_URL>
+        <TradeServerSpecsDir>$([MSBuild]::NormalizeDirectory($(MSBuildProjectDirectory), $(BaseIntermediateOutputPath), 'trade-server-specs'))</TradeServerSpecsDir>
+        <TradeServerClientsDir>Generated/</TradeServerClientsDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <TradeServerApi Include="PublicApi" SpecUrl="$(TRADE_SERVER_DOCS_URL.TrimEnd('/'))/api/openapi.yaml" />
+        <TradeServerApi Include="AdminApi" SpecUrl="$(TRADE_SERVER_DOCS_URL.TrimEnd('/'))/admin-api/openapi.yaml" />
+    </ItemGroup>
+
+    <Target Name="IncludeTradeServerClients" BeforeTargets="BeforeBuild" DependsOnTargets="DownloadTradeServerSpecs;GenerateTradeServerClients" Condition="'$(DesignTimeBuild)' != 'true'">
+        <ItemGroup>
+            <Compile Remove="$(TradeServerClientsDir)**/*.cs" />
+            <Compile Include="$(TradeServerClientsDir)**/*.cs" />
+        </ItemGroup>
+    </Target>
+
+    <Target Name="DownloadTradeServerSpecs">
+        <DownloadTradeServerSpec Url="%(TradeServerApi.SpecUrl)" DestinationFile="$(TradeServerSpecsDir)%(TradeServerApi.Identity).yaml" />
+    </Target>
+
+    <Target Name="GenerateTradeServerClients"
+            Inputs="$(TradeServerSpecsDir)%(TradeServerApi.Identity).yaml;$(MSBuildThisFileFullPath);$(MSBuildProjectDirectory)/.config/dotnet-tools.json"
+            Outputs="$(TradeServerClientsDir)%(TradeServerApi.Identity)/kiota-lock.json">
+        <Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildProjectDirectory)" StandardOutputImportance="low" />
+        <Exec Command="dotnet kiota generate --language CSharp --openapi &quot;$(TradeServerSpecsDir)%(TradeServerApi.Identity).yaml&quot; --output &quot;$(TradeServerClientsDir)%(TradeServerApi.Identity)&quot; --class-name %(TradeServerApi.Identity)Client --namespace-name $(RootNamespace).%(TradeServerApi.Identity) --exclude-backward-compatible --clean-output --log-level Error"
+              WorkingDirectory="$(MSBuildProjectDirectory)"
+              EnvironmentVariables="KIOTA_CLI_TELEMETRY_OPTOUT=true"
+              StandardOutputImportance="normal"
+              IgnoreStandardErrorWarningFormat="true" />
+    </Target>
+
+    <UsingTask TaskName="DownloadTradeServerSpec" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <Url ParameterType="System.String" Required="true" />
+            <DestinationFile ParameterType="System.String" Required="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System.Net.Http" />
+            <Using Namespace="System.Net.Http.Headers" />
+            <Using Namespace="System.Text.RegularExpressions" />
+            <Code Type="Method" Language="cs"><![CDATA[
+public override bool Execute()
+{
+    // Read here rather than passed in as task parameters, which MSBuild writes to detailed build logs.
+    var user = Environment.GetEnvironmentVariable("TRADE_SERVER_DOCS_USER");
+    var password = Environment.GetEnvironmentVariable("TRADE_SERVER_DOCS_PASSWORD");
+
+    string failure = null;
+    byte[] spec = null;
+    if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(password))
+    {
+        failure = "TRADE_SERVER_DOCS_USER or TRADE_SERVER_DOCS_PASSWORD is not set";
+    }
+    else
+    {
+        try
+        {
+            using (var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) })
+            {
+                var credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(user + ":" + password));
+                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+                using (var response = http.GetAsync(Url).GetAwaiter().GetResult())
+                {
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var body = response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+                        var text = Encoding.UTF8.GetString(body);
+
+                        // A wrong address can return an HTML page with 200, which must not replace the last good spec.
+                        if (Regex.IsMatch(text, "^openapi:", RegexOptions.Multiline))
+                        {
+                            spec = body;
+                        }
+                        else
+                        {
+                            failure = "the response is not an OpenAPI YAML file";
+                        }
+                    }
+                    else
+                    {
+                        failure = "HTTP " + (int)response.StatusCode + " " + response.ReasonPhrase;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            failure = e.Message;
+        }
+    }
+
+    if (spec != null)
+    {
+        // Rewrite only on change, so an unchanged spec does not trigger code generation.
+        if (!File.Exists(DestinationFile) || !File.ReadAllBytes(DestinationFile).SequenceEqual(spec))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(DestinationFile));
+            File.WriteAllBytes(DestinationFile, spec);
+        }
+    }
+    else if (File.Exists(DestinationFile))
+    {
+        Log.LogWarning("Could not download " + Url + " (" + failure + "). Building against the last downloaded copy, which may be out of date.");
+    }
+    else
+    {
+        Log.LogError("Could not download " + Url + " (" + failure + "). Check the TRADE_SERVER_DOCS_URL, TRADE_SERVER_DOCS_USER and TRADE_SERVER_DOCS_PASSWORD environment variables.");
+    }
+
+    return !Log.HasLoggedErrors;
+}
+]]></Code>
+        </Task>
+    </UsingTask>
+
+</Project>
