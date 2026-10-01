@@ -8,3 +8,8 @@ bin/
 
 # Written by the generated-api-client build
 /csharp/generated-api-client/Generated/
+
+# The contract generator's input and output stay local: the specs sit behind the docs login, and this repo is public
+/csharp/contract-generator/specs/*
+!/csharp/contract-generator/specs/.gitkeep
+/csharp/contract-generator/Contracts/
