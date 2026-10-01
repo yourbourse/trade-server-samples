@@ -41,7 +41,7 @@ When the API changes, download the specs again, run the generator again and repl
   Without it, these helpers match JSON names regardless of case. Some classes have two JSON names that differ only by case, so the helpers throw `InvalidOperationException: The JSON property name ... collides with another property`.
 - **Property names follow the JSON names**, so `b` becomes `B`. Hover over a property in your IDE to see its description. When two JSON names differ only by case, the one with the capital letter gets an `Upper` suffix: `order.S` is the symbol and `order.SUpper` is the side.
 - **Optional fields left as `null` are not sent**, and enum values are sent exactly as the API spells them, for example `buy` rather than `Buy`.
-- **A few admin fields can hold one of several shapes**, such as the actions of an order routing rule. The generator lists them when it runs, and they are typed `object`. When reading, you get a `JsonElement`: check its `t` field and convert it to the matching class.
+- **A few admin fields can hold one of several shapes**, such as the actions of an order routing rule. The generator lists them when it runs, and they are typed `object`. When reading, you get a `JsonElement`: work out which shape it is and convert it to the matching class. Routing actions and filters carry a `t` field that names the shape. The others are told apart only by which fields are present, for example `accounts`, `groups` or `groupMasks` in an account filter.
   ```csharp
   var action = (JsonElement)rule.A.First();
   if (action.GetProperty("t").GetString() == "Delay")
