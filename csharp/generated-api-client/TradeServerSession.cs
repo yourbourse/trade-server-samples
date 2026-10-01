@@ -1,4 +1,4 @@
-namespace KiotaExample;
+namespace GeneratedApiClient;
 
 /// <summary>
 /// The secrets <see cref="SigningHandler"/> needs. Until <see cref="SignIn"/> is called, requests are signed

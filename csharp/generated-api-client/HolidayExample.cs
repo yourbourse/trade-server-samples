@@ -1,9 +1,9 @@
-using KiotaExample.AdminApi;
-using KiotaExample.AdminApi.Admin.Holidays;
-using KiotaExample.AdminApi.Models;
+using GeneratedApiClient.AdminApi;
+using GeneratedApiClient.AdminApi.Admin.Holidays;
+using GeneratedApiClient.AdminApi.Models;
 using Microsoft.Kiota.Http.HttpClientLibrary.Middleware.Options;
 
-namespace KiotaExample;
+namespace GeneratedApiClient;
 
 /// <summary>
 /// Creates, reads, edits and deletes holidays through the admin API, first one at a time, then in a batch.
@@ -22,7 +22,7 @@ public class HolidayExample(AdminApiClient adminApi)
     private async Task RunOneAtATimeAsync()
     {
         Console.WriteLine("================================== Admin API: create a holiday ==================================");
-        var created = await holidays.Edit.PostAsync(NewHoliday("Kiota example", day: 31));
+        var created = await holidays.Edit.PostAsync(NewHoliday("Generated API client example", day: 31));
         long id = created!.Id!.Value;
         Console.WriteLine($"Created holiday {id}, version {created.Version}");
 
@@ -33,7 +33,7 @@ public class HolidayExample(AdminApiClient adminApi)
             Console.WriteLine($"{holiday.Description}, ETag {etag}");
 
             Console.WriteLine("================================== Admin API: edit it ==================================");
-            holiday.Description = "Kiota example, edited";
+            holiday.Description = "Generated API client example, edited";
             await holidays.Edit.PostAsync(holiday, config => config.Headers.Add("If-Match", etag));
 
             (holiday, etag) = await GetAsync(id);
@@ -65,7 +65,7 @@ public class HolidayExample(AdminApiClient adminApi)
     private async Task RunBatchAsync()
     {
         Console.WriteLine("================================== Admin API: create two holidays in one call ==================================");
-        var addResults = await holidays.Batch.Edit.PostAsync([NewHoliday("Kiota batch example 1", day: 29), NewHoliday("Kiota batch example 2", day: 30)]) ?? [];
+        var addResults = await holidays.Batch.Edit.PostAsync([NewHoliday("Generated API client batch example 1", day: 29), NewHoliday("Generated API client batch example 2", day: 30)]) ?? [];
 
         // Each item succeeds or fails on its own, even when the call as a whole succeeds.
         foreach (var result in addResults.Where(r => r.S != true))
@@ -114,6 +114,6 @@ public class HolidayExample(AdminApiClient adminApi)
         Year = 2099,
         Month = 12,
         Day = day,
-        SymbolMask = "KIOTA-EXAMPLE"
+        SymbolMask = "GENERATED-API-CLIENT-EXAMPLE"
     };
 }

@@ -6,5 +6,5 @@ bin/
 .idea/
 /csharp/dotnet.sln.DotSettings.user
 
-# Written by the Kiota example's build
-/csharp/kiota-example/Generated/
+# Written by the generated-api-client build
+/csharp/generated-api-client/Generated/

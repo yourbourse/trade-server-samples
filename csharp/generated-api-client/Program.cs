@@ -1,7 +1,7 @@
 using System.Net;
-using KiotaExample;
-using KiotaExample.AdminApi;
-using KiotaExample.PublicApi;
+using GeneratedApiClient;
+using GeneratedApiClient.AdminApi;
+using GeneratedApiClient.PublicApi;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
 using Microsoft.Kiota.Http.HttpClientLibrary.Middleware.Options;
@@ -55,7 +55,7 @@ try
     {
         await publicApi.Symbols.GetPath["NO-SUCH-SYMBOL"].GetAsync();
     }
-    catch (KiotaExample.PublicApi.Models.ProblemDetails problem)
+    catch (GeneratedApiClient.PublicApi.Models.ProblemDetails problem)
     {
         Console.WriteLine($"HTTP {problem.ResponseStatusCode}: {problem.Title} {problem.Detail}");
     }
@@ -76,11 +76,11 @@ try
 
     await new HolidayExample(adminApi).RunAsync();
 }
-catch (KiotaExample.PublicApi.Models.ProblemDetails problem)
+catch (GeneratedApiClient.PublicApi.Models.ProblemDetails problem)
 {
     Console.WriteLine($"Public API error, HTTP {problem.ResponseStatusCode}: {problem.Title} {problem.Detail} [{problem.Code}]");
 }
-catch (KiotaExample.AdminApi.Models.ProblemDetails problem)
+catch (GeneratedApiClient.AdminApi.Models.ProblemDetails problem)
 {
     Console.WriteLine($"Admin API error, HTTP {problem.ResponseStatusCode}: {problem.Title} {problem.Detail} [{problem.Code}]");
 }

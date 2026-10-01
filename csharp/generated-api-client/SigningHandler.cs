@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace KiotaExample;
+namespace GeneratedApiClient;
 
 /// <summary>
 /// Adds the API key to every request, and a timestamp HMAC signature to every POST, PUT and DELETE.

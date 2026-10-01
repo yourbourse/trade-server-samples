@@ -23,7 +23,7 @@
     </Target>
 
     <Target Name="GenerateTradeServerClients"
-            Inputs="$(TradeServerSpecsDir)%(TradeServerApi.Identity).yaml;$(MSBuildThisFileFullPath);$(MSBuildProjectDirectory)/.config/dotnet-tools.json"
+            Inputs="$(TradeServerSpecsDir)%(TradeServerApi.Identity).yaml;$(MSBuildThisFileFullPath);$(MSBuildProjectFullPath);$(MSBuildProjectDirectory)/.config/dotnet-tools.json"
             Outputs="$(TradeServerClientsDir)%(TradeServerApi.Identity)/kiota-lock.json">
         <Exec Command="dotnet tool restore" WorkingDirectory="$(MSBuildProjectDirectory)" StandardOutputImportance="low" />
         <Exec Command="dotnet kiota generate --language CSharp --openapi &quot;$(TradeServerSpecsDir)%(TradeServerApi.Identity).yaml&quot; --output &quot;$(TradeServerClientsDir)%(TradeServerApi.Identity)&quot; --class-name %(TradeServerApi.Identity)Client --namespace-name $(RootNamespace).%(TradeServerApi.Identity) --exclude-backward-compatible --clean-output --log-level Error"

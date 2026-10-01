@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-example", "api-example\api-example.csproj", "{38ADAC22-B71E-4963-9A64-FB1357342709}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kiota-example", "kiota-example\kiota-example.csproj", "{751DFC82-CDCD-4D7C-BC4F-7D5F8D125F71}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "generated-api-client", "generated-api-client\generated-api-client.csproj", "{751DFC82-CDCD-4D7C-BC4F-7D5F8D125F71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
