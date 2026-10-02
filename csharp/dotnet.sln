@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-example", "api-example\api-example.csproj", "{38ADAC22-B71E-4963-9A64-FB1357342709}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "generated-api-client", "generated-api-client\generated-api-client.csproj", "{751DFC82-CDCD-4D7C-BC4F-7D5F8D125F71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "contract-generator", "contract-generator\contract-generator.csproj", "{E6893F0C-FBE1-48E8-9744-7A3CC31D872D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,13 @@ Global
 		{38ADAC22-B71E-4963-9A64-FB1357342709}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38ADAC22-B71E-4963-9A64-FB1357342709}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38ADAC22-B71E-4963-9A64-FB1357342709}.Release|Any CPU.Build.0 = Release|Any CPU
+		{751DFC82-CDCD-4D7C-BC4F-7D5F8D125F71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{751DFC82-CDCD-4D7C-BC4F-7D5F8D125F71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{751DFC82-CDCD-4D7C-BC4F-7D5F8D125F71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{751DFC82-CDCD-4D7C-BC4F-7D5F8D125F71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6893F0C-FBE1-48E8-9744-7A3CC31D872D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6893F0C-FBE1-48E8-9744-7A3CC31D872D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6893F0C-FBE1-48E8-9744-7A3CC31D872D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6893F0C-FBE1-48E8-9744-7A3CC31D872D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>ContractGenerator</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="NSwag.CodeGeneration.CSharp" Version="14.7.1" />
+        <PackageReference Include="NSwag.Core.Yaml" Version="14.7.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="Contracts/**" />
+    </ItemGroup>
+
+</Project>
